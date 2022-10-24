@@ -11,10 +11,6 @@ def kill_switch():
         while tello.send_control_command("emergency") == False: # Internal method with return
             pass
         tello.is_flying = False # So that the API ends and the program quits
-    
-
-
-
 atexit.register(kill_switch)
 
 
