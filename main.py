@@ -1,11 +1,12 @@
 from djitellopy import Tello
 import atexit, time
-from dev import tools
+from dev import Tools
+
 
 tello = Tello()
 
-tools.kill_switch(tello)
-atexit.register(tools.kill_switch, self = tello)
+Tools.kill_switch(tello)
+atexit.register(Tools.kill_switch, self = tello)
 
 
 
