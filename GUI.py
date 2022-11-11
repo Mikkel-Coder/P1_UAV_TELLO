@@ -87,7 +87,7 @@ def gui():
             [sg.Canvas(key = '-graph-')]]
 
     # creates the window using the layout from above
-    window = sg.Window('Monte Carlo simulator',
+    window = sg.Window('P1 UAV wifi probe visualization',
                         layout = layout,
                         finalize = True,
                         element_justification='center')
