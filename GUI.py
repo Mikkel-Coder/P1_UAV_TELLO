@@ -12,8 +12,9 @@ def csv_to_df(file, search_ssid):
     data = pd.read_csv(file, sep=";") # reading the csv and splitting when there is a semicolon
     # print(data)
     search_data = data.loc[data['ssid'] == search_ssid] # making new df of only the same ssid's
-    print(search_data)
-    top_bssid = search_data['bssid'].iloc[1] # finds the first bssid to further look at
+    # print(search_data)
+    bssid_freq = search_data['bssid'].value_counts()
+    top_bssid = bssid_freq.index[0] # finds the most frequently ocurring bssid in the dataframe of a certain ssid. change the index to look at others
     print(f"searching by first bssid entry: {top_bssid}")
     top_bssid_df = search_data.loc[search_data['bssid'] == top_bssid] # making a new df of only same ssid's AND bssid's based on 'top_bssid'
     # print(top_bssid_df)
