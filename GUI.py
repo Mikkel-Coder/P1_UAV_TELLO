@@ -10,11 +10,12 @@ import pandas as pd
 def csv_to_df(file, search_ssid):
     """Takes the raw data and sorts it to find all data on a single bssid. Returns a dataframe of those bssid measurements"""
     data = pd.read_csv(file, sep=";") # reading the csv and splitting when there is a semicolon
-    # print(data)
+    print(data)
     search_data = data.loc[data['ssid'] == search_ssid] # making new df of only the same ssid's
     # print(search_data)
     bssid_freq = search_data['bssid'].value_counts()
-    top_bssid = bssid_freq.index[0] # finds the most frequently ocurring bssid in the dataframe of a certain ssid. change the index to look at others
+    print(bssid_freq)
+    top_bssid = bssid_freq.index[0] # finds the most frequently ocurring bssid in the dataframe of a certain ssid. change the index to look at others !!!!!
     print(f"searching by first bssid entry: {top_bssid}")
     top_bssid_df = search_data.loc[search_data['bssid'] == top_bssid] # making a new df of only same ssid's AND bssid's based on 'top_bssid'
     # print(top_bssid_df)
@@ -56,15 +57,18 @@ def make_fig(df):
     fig, ax = plt.subplots()
     ax.plot(df['RSSI'], ".", label="data") # plots x as distance from first measurement and y as RSSI
 
-    x_data = np.array(df.index)
+    """x_data = np.array(df.index)
     x_data[0] = x_data[1] * 0.1 # x_data[0] will always be 0, but log(0) throws an error due to it being impossible.
     # Therefore we cheat a little by making it 10% of the next x_value
     y_data = df['RSSI']
     # Taking log of x values
     xlog_data =  (-1) * np.log(x_data)
     a, b = np.polyfit(xlog_data, y_data, 1)
+    # print(xlog_data)
+    # print(a, b)
     y = a * xlog_data + b
-    ax.plot(x_data, y, '--', label="log fit")
+    # print(y)
+    ax.plot(x_data, y, '--', label="log fit")"""
 
     ax.grid(True)
     ax.set_xlabel('distance (cm) from first measurement')

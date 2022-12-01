@@ -40,11 +40,11 @@ kp.init()
 drone = tello.Tello()
 drone.connect()
 print(drone.get_battery())
-
+# sleep(5)
 
 def getKeyboardInput():
     lr, fb, ud, yv = 0, 0, 0, 0 # lr = left/right, fb = forward/back, ud = up/down, dv = yaw velocity
-    speed = 50 # cm/second  - tror jeg
+    speed = 50 # cm/second
 
     if kp.getKey('LEFT'): lr = -speed
     elif kp.getKey('RIGHT'): lr = speed
@@ -55,15 +55,13 @@ def getKeyboardInput():
     if kp.getKey('w'): ud = speed
     elif kp.getKey('s'): ud = -speed
 
-    if kp.getKey('a'): yv = -speed
-    elif kp.getKey('d'): yv = speed
+    if kp.getKey('a'): yv = -speed * 2
+    elif kp.getKey('d'): yv = speed * 2
 
     if kp.getKey('q'): drone.land()
     if kp.getKey('e'): drone.takeoff()
 
     return [lr, fb, ud, yv]
-
-drone.takeoff()
 
 while True:
     vals = getKeyboardInput()

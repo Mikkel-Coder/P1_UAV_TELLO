@@ -9,12 +9,14 @@ def init():
 def getKey(keyName):
     ans = False
     for eve in pygame.event.get():
+        # print(eve)
         pass
     keyInput = pygame.key.get_pressed()
+    # print(keyInput)
     myKey = getattr(pygame, 'K_{}'.format(keyName))
     if keyInput[myKey]:
         ans = True
-    pygame.display.update()
+    # pygame.display.update()
     return ans
 
 

@@ -5,7 +5,7 @@ HEADER = 64
 PORT = 5050
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = '!DISCONNECT'
-SERVER = '192.168.87.119'
+SERVER = '192.168.4.1'
 ADDR = (SERVER, PORT)
 
 
@@ -21,11 +21,15 @@ def send(msg):
     client.send(message)
     print(client.recv(2048).decode(FORMAT))
 
+print("connected!")
 
 send("Hello, server!")
 input()
-send("Hello, server!2")
+
+
+cmd_list = "cmd_lst, "
+cmd_list += 'command, takeoff, forward 100, forward 100, land'
+send('hii')
 input()
-send("Hello, server!3")
-input()
+
 send(DISCONNECT_MESSAGE)
