@@ -35,8 +35,8 @@ def length_splitter(n:int, step:float, safe_dist:int, override_auto_step=False) 
 
 
 
-x = 140# cm
-y = 100 # cm
+x = 300# cm
+y = 150 # cm
 # z = 150 # cm - bruges ikke endnu
 sd = 0 # cm
 step_dist = 50 # cm
