@@ -1,0 +1,22 @@
+*{
+    padding: 0px;
+    margin: 0px;
+    font-family: 'Verdana';
+}
+
+.button {
+    background-color: beige;
+    border-radius: 5px;
+    margin: 40px;
+    width: 30%;
+    padding: 10px;
+}
+
+.header{
+    padding: 10px;
+    background-color: darkgrey;
+    text-align: justify;
+}
+
+  
+
