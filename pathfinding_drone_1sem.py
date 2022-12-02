@@ -39,7 +39,7 @@ x = 300# cm
 y = 150 # cm
 # z = 150 # cm - bruges ikke endnu
 sd = 0 # cm
-step_dist = 50 # cm
+step_dist = 150 # cm
 
 
 x_coords, x_step_dist, x_amount_of_steps = length_splitter(n=x, step=step_dist, safe_dist=sd, override_auto_step=False)
