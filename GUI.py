@@ -5,39 +5,65 @@ import matplotlib.pyplot as plt
 matplotlib.use("TkAgg")
 import numpy as np
 import pandas as pd
+from client import Client
+from pathfinder import length_splitter, path
+import time
+import pickle
 
 
-def csv_to_df(file, search_ssid):
-    """Takes the raw data and sorts it to find all data on a single bssid. Returns a dataframe of those bssid measurements"""
-    data = pd.read_csv(file, sep=";") # reading the csv and splitting when there is a semicolon
-    print(data)
-    search_data = data.loc[data['ssid'] == search_ssid] # making new df of only the same ssid's
-    # print(search_data)
-    bssid_freq = search_data['bssid'].value_counts()
-    print(bssid_freq)
-    top_bssid = bssid_freq.index[0] # finds the most frequently ocurring bssid in the dataframe of a certain ssid. change the index to look at others !!!!!
-    print(f"searching by first bssid entry: {top_bssid}")
-    top_bssid_df = search_data.loc[search_data['bssid'] == top_bssid] # making a new df of only same ssid's AND bssid's based on 'top_bssid'
-    # print(top_bssid_df)
-    return top_bssid_df
+def amount_of_scans(command_str):
+    amt_scans = 1 # 1 because of the takeoff command.
+    command_list = command_str.split(',')
+    for command in command_list:
+        if 'forward' in command: # a scan before each forward command
+            amt_scans += 1
+    return amt_scans
 
-def calc_x_dist(y2, y1, speed):
-    # to calc distance the formula is distance = speed x time. units need to be the same. meters/second from dronespeed, and seconds between measurements
-    dist = (y2 - y1) * speed
-    # print(dist)
-    return dist * 100 # distance in centimeters
 
-def dist_index_df(df, speed):
-    """funktion der udregner hvordan x-aksen skal skalleres baseret på tid mellem målinger og hastighed af endelige df"""
-    time_array = df['time'].to_numpy()
-    distances = np.zeros_like(time_array)
-    for i in range(len(time_array) - 1): # goes from index 1 - 19
-        i = i + 1 # helps go from index 1 - 19
-        distances[i] = calc_x_dist(time_array[i], time_array[i-1], speed) # places the distance between current index and the index - 1
+def handle_answer(answer, search_ssid):
 
-    cum_distances = distances.cumsum() # makes the distances cumulative
-    # print(cum_distances)
-    return df.set_index(cum_distances) # sets the index of the dataframe to the distance from first measurement which is 0 meters
+    answer = answer.split(' ')
+    for i in range(len(answer)):
+        try:
+            answer[i] = answer[i].strip(" ,)(]['") # removes annoying characters from the string. The measured data is still intact
+            answer[i] = float(answer[i]) # converts to float if possible
+        except Exception:
+            pass
+
+    coords = tuple(answer[-2:]) # coords are secured
+    del answer[-2:] # coords removed from OG list
+
+    # every AP's scanresult is 5 or 6 parts long, so making a loop to save them to individual tuples in a dictionary
+    scan_results = {
+        'SSID' : [],
+        'bSSID' : [],
+        'RSSI' : [],
+        'coordinates' : []
+    }
+    start = 0 # first index to save into the tuple of each accespoint
+
+    for item in range(len(answer)):
+        try:
+            
+            if type(answer[item]) == float and type(answer[item + 1]) == str: # if the current item is a float and the next is a string
+                # then this is where the tuples should be seperate
+
+                scan = tuple(answer[start : item + 1]) # saves results from 'start' to seperationpoint (after float, before string)
+                scan_results['SSID'].append(scan[0] + "'")                
+                scan_results['bSSID'].append((scan[1] + "'").encode('utf-8')) # gets bssid, but doesnt work currently. The formats are completely broken??
+                scan_results['RSSI'].append(scan[-3])
+                scan_results['coordinates'].append(coords)
+                start += item - start + 1 # start is updated
+                # ap += 1 # ap key is counted up 1 for the next accespoint
+        except Exception:
+            pass
+
+    # print(scan_results, len(scan_results['SSID']), len(scan_results['RSSI']))
+    # print(coords)
+    df = pd.DataFrame(scan_results)
+    search_data = df.loc[df['SSID'] == search_ssid]
+
+    return search_data
 
 
 def draw_figure(canvas, figure):
@@ -47,10 +73,12 @@ def draw_figure(canvas, figure):
     figure_canvas_agg.get_tk_widget().pack(side="top", fill="both", expand=1)
     return figure_canvas_agg
 
+
 def delete_fig(fig):
     """Deletes figure from plot"""
     fig.get_tk_widget().forget()
     plt.close('all')
+
 
 def make_fig(df):
    
@@ -81,15 +109,18 @@ def make_fig(df):
 
     return(fig)
 
+
 def gui():
     """Creates the GUI itself. Error-handles and calls other functions when needed"""
     # Creates the layout with inputboxes and such
-    layout = [[sg.Text("GUI for csv wifi data")],
-            [sg.Text('choose the .csv-file'), sg.FileBrowse(key = '-csv-')],
-            [sg.Text('Choose SSID to plot:'), sg.Input("b'AAU-1-DAY'", key = '-search_ssid-')],
-            [sg.Text('input drone-speed during measurements (m/s):'), sg.Input('2', key = '-speed-')],
-            [sg.Button('Simulate and graph')],
-            [sg.Canvas(key = '-graph-')]]
+
+    layout = [[sg.Text('Length (cm):'), sg.Input(100, key = '-x-'),sg.Text('Width (cm):'), sg.Input(100, key = '-y-')],
+            [sg.Text('Step distance (20-500 cm):'), sg.Input(50, key = '-step_dist-'), sg.Text('Safety distance to boundaries in cm:'), sg.Input(0, key = '-sd-')],
+
+            [sg.Text('Choose SSID to plot:'), sg.Input("AAU-1-DAY", key = '-search_ssid-'),
+            sg.Text('Choose graph variant:'), sg.Combo(['Heatmap', 'Fitted graph'], size=(20,1), readonly=True, default_value='Heatmap', key = '-variant-')],
+            [sg.Button('1: Generate command list for drone'), sg.Button('2: Connect to drone'), sg.Button('3: Send command list')],
+            [sg.Canvas(key = '-graph-')]]        
 
     # creates the window using the layout from above
     window = sg.Window('P1 UAV wifi probe visualization',
@@ -102,33 +133,104 @@ def gui():
     while True:
         event, values = window.read()
         
-        if event == 'Simulate and graph':
+        if event == '1: Generate command list for drone':
+            
+            try: # Error handling
+                # defining variables
+                x = int(values['-x-'])
+                y = int(values['-y-'])
+                step_dist = int(values['-step_dist-'])
+                sd = int(values['-sd-'])
+                search_ssid = f"b'{values['-search_ssid-']}'"
+                graph_type = str(values['-variant-'])
+                print(x, y, step_dist, sd, search_ssid, graph_type)
+
+                msg = path(x=x, y=y, step_dist=step_dist, sd=sd)
+                print(msg)
+                client = Client(msg=msg)
+                time.sleep(1)
+        
+            except Exception as e:
+                sg.Popup(f"Error in input: {e}") # creates pop-up that tells the user what is wrong, if an error occurs.
+                client.close() # tries to close the client
+        
+        if event == '2: Connect to drone':
+            time.sleep(1)
+            try: # Error handling
+                # connecting to the Pico
+                client.sock_connect()
+                time.sleep(2)
+        
+            except Exception as e:
+                sg.Popup(f"Error in connecting to PicoW server: {e}") # creates pop-up that tells the user what is wrong, if an error is found.
+                client.close()
+
+        
+        if event == '3: Send command list':
             if fig_gui != None:
                 delete_fig(fig_gui) # if there is a figure on the GUI already then delete it when a new one is about to be created
             
             try: # Error handling
-                speed = float(values['-speed-'])
-                search_ssid = str(values['-search_ssid-'])
-                file = values['-csv-']
+                print('Sending command list: ', client.cmd_lst)
 
-                # finds certain bssid - data from all measured data
-                bssid_df = csv_to_df(file, search_ssid)
-                # print(bssid_df)
-
-                # gets a df with distance from first measurement as index.
-                df = dist_index_df(bssid_df, speed) 
-                print(df)
                 
-                fig = make_fig(df) # makes a figure with the values
-                fig_gui = draw_figure(window['-graph-'].TKCanvas, fig) # draws said figure on the GUI
+                ans = client.send_cmd_list() # send_cmd_list returns the first scan from the Pico W.
+                
+                df = handle_answer(answer=ans, search_ssid=search_ssid) # returns RSSI and coords of specified ssid
+
+                # finds out how many times to recieve data. If miscounted, client.recv_scan() will be stuck forever
+                scan_amount = amount_of_scans(client.cmd_lst)
+                print('amount of scans to conduct: ', scan_amount)
+                for scan_num in range(scan_amount):
+                    ans = client.recv_scan() # the scans are saved in an attribute of 'client' called scan_lst
+                    df = handle_answer(answer=ans, search_ssid=search_ssid)
+                
+                print(client.scan_lst)
+
+                print('Pickling raw scan data (client.scan_lst)...')
+                hour, minute, second = time.localtime()[3:6]
+                file = open(f'pickled_raw_data_{hour}_{minute}_{second}', 'wb')
+                # dumping info
+                pickle.dump(client.scan_lst, file)
+                file.close()
+                print('done pickling')
+
+                """
+                Write graphing code in here or above. Gør data til dataframe der gemmes til csv mellem hver scanning. Så kan data reddes.
+                """
+                
+        
             except Exception as e:
-                sg.Popup(f"Error in input: {e}") # creates pop-up that tells the user what is wrong, if an error is found.
+                sg.Popup(f"Error in connecting to PicoW server: {e}") # creates pop-up that tells the user what is wrong, if an error is found.
+
+                print('Pickling raw scan data (client.scan_lst)...')
+                hour, minute, second = time.localtime()[3:6]
+                file = open(f'pickled_raw_data_{hour}_{minute}_{second}', 'wb')
+                # dumping info
+                pickle.dump(client.scan_lst, file)
+                file.close
+                print('done pickling')
+                client.close()
+        
 
         # if the window is closed, break out of the while-loop, ending the script
         if event == sg.WIN_CLOSED:
+            try:
+                client.close()    # close the socket as the last thing after the closebutton is pressed pressed. This is the kill-switch!
+                print('closing socket')
+            except UnboundLocalError as e:
+                print('UnboundLocalError: ', e)
+                print('There was no socket to close.')
             break
         
     plt.close('all')
     window.close()
 
-gui()
+if __name__ == '__main__':
+    try:
+        gui()
+    except KeyboardInterrupt as e:
+        print('KeyboardInterrupt: ', e)
+
+# fig = make_fig() # makes a figure with the values
+# fig_gui = draw_figure(window['-graph-'].TKCanvas, fig) # draws said figure on the GUI

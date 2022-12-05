@@ -27,9 +27,8 @@ send("Hello, server!")
 input()
 
 
-cmd_list = "cmd_lst, "
-cmd_list += 'command, takeoff, forward 100, forward 100, land'
-send('hii')
+cmd_list = "cmd_lst, command, takeoff,forward 150,forward 150,cw 90,forward 150,cw 90,forward 150,forward 150,land"
+send(cmd_list)
 input()
 
 send(DISCONNECT_MESSAGE)
