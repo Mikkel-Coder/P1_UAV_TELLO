@@ -12,7 +12,7 @@ import pickle
 
 
 def amount_of_scans(command_str):
-    amt_scans = 1 # 1 because of the takeoff command.
+    amt_scans = 0 # 1 because of the takeoff command.
     command_list = command_str.split(',')
     for command in command_list:
         if 'forward' in command: # a scan before each forward command
@@ -22,10 +22,10 @@ def amount_of_scans(command_str):
 
 def handle_answer(answer, search_ssid):
 
-    answer = answer.split(' ')
+    answer = answer.split(',')
     for i in range(len(answer)):
         try:
-            answer[i] = answer[i].strip(" ,)(]['") # removes annoying characters from the string. The measured data is still intact
+            answer[i] = answer[i].strip(" )(]['") # removes annoying characters from the string. The measured data is still intact
             answer[i] = float(answer[i]) # converts to float if possible
         except Exception:
             pass
@@ -41,6 +41,7 @@ def handle_answer(answer, search_ssid):
         'coordinates' : []
     }
     start = 0 # first index to save into the tuple of each accespoint
+    # print(answer)
 
     for item in range(len(answer)):
         try:
@@ -177,6 +178,7 @@ def gui():
                 ans = client.send_cmd_list() # send_cmd_list returns the first scan from the Pico W.
                 
                 df = handle_answer(answer=ans, search_ssid=search_ssid) # returns RSSI and coords of specified ssid
+                print(df)
 
                 # finds out how many times to recieve data. If miscounted, client.recv_scan() will be stuck forever
                 scan_amount = amount_of_scans(client.cmd_lst)
@@ -184,7 +186,8 @@ def gui():
                 for scan_num in range(scan_amount):
                     ans = client.recv_scan() # the scans are saved in an attribute of 'client' called scan_lst
                     df = handle_answer(answer=ans, search_ssid=search_ssid)
-                
+                    print(df)
+
                 print(client.scan_lst)
 
                 print('Pickling raw scan data (client.scan_lst)...')
@@ -198,7 +201,7 @@ def gui():
                 """
                 Write graphing code in here or above. Gør data til dataframe der gemmes til csv mellem hver scanning. Så kan data reddes.
                 """
-                
+                    
         
             except Exception as e:
                 sg.Popup(f"Error in connecting to PicoW server: {e}") # creates pop-up that tells the user what is wrong, if an error is found.

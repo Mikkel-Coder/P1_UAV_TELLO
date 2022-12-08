@@ -48,7 +48,7 @@ class Client:
 
 if __name__ == '__main__':
     try:
-        msg = 'cmd_lst, command, battery?'
+        msg = 'cmd_lst, command, battery?, takeoff, forward 100, forward 100'
         client = Client(msg=msg)
         client.sock_connect() 
 
