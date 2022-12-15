@@ -34,6 +34,16 @@ class Client:
         self.scan_lst.append(ans)
         print(ans)
         return ans
+    
+
+    def send_keepalive(self):
+        message = 'keepalive'.encode(self.FORMAT)
+        msg_length = len(message)
+        send_length = str(msg_length).encode(self.FORMAT)
+        send_length += b' ' * (self.HEADER - len(send_length))
+        self.client_sock.send(send_length)
+        self.client_sock.send(message)
+        print('keepalive sent')
 
     
     def recv_scan(self):
